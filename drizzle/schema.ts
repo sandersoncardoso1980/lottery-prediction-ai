@@ -25,4 +25,21 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Lottery Analysis table - stores analysis results and predictions
+ */
+export const lotteryAnalyses = mysqlTable("lottery_analyses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  lotteryType: mysqlEnum("lotteryType", ["lotofacil", "megasena"]).notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  totalDraws: int("totalDraws").notNull(),
+  analysisData: text("analysisData").notNull(), // JSON string with statistics
+  predictions: text("predictions").notNull(), // JSON string with AI predictions
+  groqAnalysis: text("groqAnalysis"), // Full Groq analysis response
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LotteryAnalysis = typeof lotteryAnalyses.$inferSelect;
+export type InsertLotteryAnalysis = typeof lotteryAnalyses.$inferInsert;

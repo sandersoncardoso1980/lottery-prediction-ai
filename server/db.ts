@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, lotteryAnalyses } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -85,6 +85,59 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function saveLotteryAnalysisRecord(
+  userId: number,
+  lotteryType: "lotofacil" | "megasena",
+  fileName: string,
+  totalDraws: number,
+  analysisData: Record<string, unknown>,
+  predictions: Record<string, unknown>,
+  groqAnalysis?: string
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return await db.insert(lotteryAnalyses).values({
+    userId,
+    lotteryType,
+    fileName,
+    totalDraws,
+    analysisData: JSON.stringify(analysisData),
+    predictions: JSON.stringify(predictions),
+    groqAnalysis,
+  });
+}
+
+export async function getLotteryAnalysesByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return await db
+    .select()
+    .from(lotteryAnalyses)
+    .where(eq(lotteryAnalyses.userId, userId))
+    .orderBy(lotteryAnalyses.createdAt);
+}
+
+export async function getLotteryAnalysisRecordById(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(lotteryAnalyses)
+    .where(eq(lotteryAnalyses.id, id))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
